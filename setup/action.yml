@@ -1,0 +1,53 @@
+name: rellog setup
+description: Install rellog from
+inputs:
+  version:
+    required: false
+    description: rellog CLI version to install from GitHub Releases.
+
+runs:
+  using: composite
+  steps:
+    - name: Resolve rellog version
+      id: version
+      shell: bash
+      env:
+        INPUT_VERSION: ${{ inputs.version }}
+        ACTION_REF: ${{ github.action_ref }}
+      run: |
+        set -euo pipefail
+
+        version="${INPUT_VERSION}"
+        if [[ -z "${version}" ]]; then
+          if [[ "${ACTION_REF}" == "latest" ]]; then
+            # let the installer resolve the latest rellog CLI release
+            echo "release_tag=" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+        fi
+
+        release_tag="${version#refs/tags/}"
+
+        echo "release_tag=${release_tag}" >> "${GITHUB_OUTPUT}"
+
+    - name: Install rellog
+      id: install
+      shell: bash
+      env:
+        RELEASE_TAG: ${{ steps.version.outputs.release_tag }}
+      run: |
+        set -euo pipefail
+
+        bin_dir="${RUNNER_TEMP}/rellog-ready-action/bin"
+        rm -rf "${bin_dir}"
+        mkdir -p "${bin_dir}"
+
+        installer_args=(--install-dir "${bin_dir}")
+        if [[ -n "${RELEASE_TAG}" ]]; then
+          installer_args=(--version "${RELEASE_TAG}" "${installer_args[@]}")
+        fi
+
+        curl -fsSL https://raw.githubusercontent.com/tooppoo/rellog/refs/heads/main/install.sh \
+          | sh -s -- "${installer_args[@]}"
+
+        echo "${bin_dir}" >> "${GITHUB_PATH}"
