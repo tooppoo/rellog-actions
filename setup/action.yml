@@ -1,5 +1,5 @@
 name: rellog setup
-description: Install rellog from
+description: Install rellog
 inputs:
   version:
     required: false
@@ -19,11 +19,9 @@ runs:
 
         version="${INPUT_VERSION}"
         if [[ -z "${version}" ]]; then
-          if [[ "${ACTION_REF}" == "latest" ]]; then
-            # let the installer resolve the latest rellog CLI release
-            echo "release_tag=" >> "${GITHUB_OUTPUT}"
-            exit 0
-          fi
+          # let the installer resolve the latest rellog CLI release
+          echo "release_tag=" >> "${GITHUB_OUTPUT}"
+          exit 0
         fi
 
         release_tag="${version#refs/tags/}"
@@ -38,7 +36,7 @@ runs:
       run: |
         set -euo pipefail
 
-        bin_dir="${RUNNER_TEMP}/rellog-ready-action/bin"
+        bin_dir="${RUNNER_TEMP}/rellog-setup/bin"
         rm -rf "${bin_dir}"
         mkdir -p "${bin_dir}"
 
